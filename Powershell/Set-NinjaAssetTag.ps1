@@ -22,26 +22,18 @@
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-if (!(Get-PackageProvider -Name NuGet)) {
-    # NuGet provider not installed, installing
-    Write-Host "NuGet provider is not installed. Installing..."
-    $providerPath = "$env:ProgramFiles\PackageManagement\ProviderAssemblies\Nuget\2.8.5.208"
-    if (-not (Test-Path -Path $providerPath)) {
-        New-Item -Path $providerPath -ItemType Directory | Out-Null
-    }
-    $providerDll = Join-Path $providerPath "Microsoft.PackageManagement.NuGetProvider.dll"
-    if (-not (Test-Path -Path $providerDll)) {
-        $nugetUrl = 'https://onegetcdn.azureedge.net/providers/Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll'
-        Invoke-WebRequest -Uri $nugetUrl -OutFile $providerDll
-    }
-    #Install NuGet from downloaded dll
-    Install-PackageProvider -Name NuGet -Force
-}
+try {
+    # Install NuGet
+    Write-Host "Installing NuGet..."
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop
 
-# RunAsUser Module Check
-if (!(Get-InstalledModule -Name RunAsUser)) {
-    Write-Host "RunAsUser Module does not exist. Installing Module..."
-    Install-Module RunAsUser -Confirm:$False -Force
+    # Install RunAsUserModule
+    Write-Host "Installing RunAsUser Module..."
+    Install-Module RunAsUser -Confirm:$False -Force -ErrorAction Stop
+
+    Write-Host "Installation completed successfully."
+} catch {
+    Write-Host "An error occurred during installation: $_"
 }
 
 # Grab Asset Tag Custom Field
