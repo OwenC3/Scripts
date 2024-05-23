@@ -23,18 +23,37 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 try {
-    # Install NuGet
-    Write-Host "Installing NuGet..."
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop
+    # Check if NuGet is installed and its version
+    $nugetProvider = Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue
+    if ($null -eq $nugetProvider -or $nugetProvider.Version -lt [version]"2.8.5.201") {
+        Write-Host "Installing or updating NuGet..."
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop
+    } else {
+        Write-Host "NuGet is already up to date."
+    }
 
-    # Install RunAsUserModule
-    Write-Host "Installing RunAsUser Module..."
-    Install-Module RunAsUser -Confirm:$False -Force -ErrorAction Stop
+    # Check if RunAsUser module is installed and its version
+    $runAsUserModule = Get-Module -Name RunAsUser -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1
+    if ($null -eq $runAsUserModule) {
+        Write-Host "RunAsUser module is not installed. Installing..."
+        Install-Module RunAsUser -Confirm:$False -Force -ErrorAction Stop
+    } else {
+        # Assuming you want to ensure it's the latest version available in the repository
+        $installedVersion = $runAsUserModule.Version
+        $availableVersion = Find-Module -Name RunAsUser | Select-Object -ExpandProperty Version
+        if ($availableVersion -gt $installedVersion) {
+            Write-Host "Updating RunAsUser module to the latest version..."
+            Install-Module RunAsUser -Confirm:$False -Force -ErrorAction Stop
+        } else {
+            Write-Host "RunAsUser module is already up to date."
+        }
+    }
 
-    Write-Host "Installation completed successfully."
+    Write-Host "Installation and update process completed successfully."
 } catch {
     Write-Host "An error occurred during installation: $_"
 }
+
 
 # Grab Asset Tag Custom Field
 $AssetTag = Ninja-Property-Get AssetTag
