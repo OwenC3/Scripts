@@ -21,6 +21,7 @@
 #>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Set-ExecutionPolicy Bypass -Scope Process -Force
 
 try {
     # Check if NuGet is installed and its version
